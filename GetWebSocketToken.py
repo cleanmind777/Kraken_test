@@ -16,7 +16,7 @@ load_dotenv()
 PUBLIC_KEY = os.getenv("PUBLIC_KEY")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
-def main():
+def get_token():
    response = request(
       method="POST",
       path="/0/private/GetWebSocketsToken",
@@ -79,4 +79,4 @@ def sign(private_key: str, message: bytes) -> str:
 
 
 if __name__ == "__main__":
-   main()
+   get_token()
