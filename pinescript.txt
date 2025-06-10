@@ -1,0 +1,151 @@
+//@version=5
+
+strategy(title="RSI Crossover", overlay = true, pyramiding = 0, commission_type =  strategy.commission.percent, commission_value = 0, default_qty_type =  strategy.fixed, default_qty_value = 100, initial_capital=10000, currency=currency.USD,explicit_plot_zorder = true)
+
+startDate = input(title="Start Date",defval=1)
+startMonth = input(title="Start Month",defval=1)
+startYear = input(title="Start Year", defval=2000)
+
+afterStartDate = (time >= timestamp(syminfo.timezone,startYear, startMonth, startDate, 0, 0))
+
+var float stoploss = na
+var bool barbuy = na
+var bool barsell = na
+
+smoothK = input(3,"smoothK")
+smoothD = input(3, "smoothD")
+lengthRSI = input(10, "lengthRSI")
+lengthStoch = input(10, "lengthStoch")
+src = input(close, title="RSI Source")
+
+rsi1 = ta.rsi(src, lengthRSI)
+k = ta.sma(ta.stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = ta.sma(k, smoothD)
+emasrc = close, 
+len1 = input(8, title="EMA 1")
+len2 = input(14, title="EMA 2")
+len3 = input(50, title="EMA 3")
+ema1 = ta.ema(emasrc, len1)
+ema2 = ta.ema(emasrc, len2)
+ema3 = ta.ema(emasrc, len3)
+
+col1 = color.lime
+col2 = color.blue
+col3 = color.orange
+
+
+plot(ema1, title="EMA 1", linewidth=1, color=col1)
+plot(ema2, title="EMA 2", linewidth=1, color=col2)
+
+crossup = k[1] >= d[1] and k[2] <= d[2] and k <= 60 and k >= 10
+crossdown = k[1] <= d[1] and k[2] >= d[2] and k >= 40 and k <= 95
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+[supertrend, direction] = ta.supertrend(3, 5)
+Trend_rising = ta.rising(close, 1)
+Trend_falling = ta.falling(close, 1)
+
+plot(direction < 0 ? supertrend : na, "Up direction", color = color.green, style=plot.style_linebr)
+plot(direction > 0 ? supertrend : na, "Down direction", color = color.red, style=plot.style_linebr)
+
+if strategy.position_size == 0
+    barbuy:= false, barsell := false
+    barbuy := ema1 > ema2 and Trend_rising and ema1 > ema1[1]
+    barsell := ema2 > ema1 and Trend_falling and close < ema1 and direction > 0 and macdLine < signalLine
+lengthATR = input(title="ATR Length", defval=14)
+atr_loss = input.float(title="ATR loss multiplier", defval=5)
+atr_profit3 = input.float(title="Takeprofit3 profit multiplier", defval=2.8)
+atr_profit2 = input.float(title="Takeprofit2 multiplier", defval=0.5)
+atr_profit1 = input.float(title = "Takeprofit1 multiplier", defval = 0.1)
+
+plotshape(barbuy and strategy.position_size == 0 ?close:na, style=shape.circle,text = "Enter_Long \n 🚀" ,location=location.belowbar, color=color.green, size = size.small)
+plotshape(barsell and strategy.position_size == 0 ?close:na, style=shape.circle,text = "Enter_Short \n 🪂" ,location=location.abovebar, color=color.red, size = size.small)
+
+atr = ta.atr(lengthATR)
+// longloss = ta.sma(open, 1)
+longprofit = ta.sma(open, 1)
+// shortloss = ta.sma(open, 1)
+shortprofit = ta.sma(open, 1)
+var float longloss = na
+var float shortloss = na
+var float longprofit1 = na
+var float longprofit2 = na
+var float longprofit3 = na
+var float shortprofit1 = na
+var float shortprofit2 = na
+var float shortprofit3 = na
+sym_info = syminfo.ticker
+
+if strategy.position_size > 0 and barsell
+    strategy.close_all("all_trades")
+
+Entry_Json_Message(sym_info, action, vol) =>
+     '{
+     "pair"       : "'+sym_info+'",\n
+     "type"       : "'+action+'",\n
+     "volume"     : "'+str.tostring(vol)+'",\n
+     }'
+Exit_Json_Message(sym_info,action, vol)=>
+     '{
+     "pair"       : "'+sym_info+'",\n
+     "type"         : "'+action+'"   ,\n
+     "volume"         : "'+str.tostring(vol)+'",\n
+     }'
+
+if (afterStartDate) and strategy.position_size == 0
+    if barbuy
+        alert_message = Entry_Json_Message(syminfo.ticker, "buy", 100)
+        log.info(alert_message)
+        strategy.entry("Long", strategy.long,alert_message = alert_message) 
+        longloss := close - atr*atr_profit3/1.5
+        longprofit1 := high + (atr * atr_profit1) 
+        longprofit2 := high + (atr * atr_profit2) 
+        longprofit3 := high + (atr * atr_profit3)
+        stoploss := longloss
+        log.info("--stoploss----"+"\n" + "stoploss==>" + str.tostring( close - stoploss))
+
+
+    if barsell
+        alert_message = Entry_Json_Message(syminfo.ticker, "sell", -100)
+        log.info(alert_message)
+        strategy.entry("Short", strategy.short) 
+        shortprofit1 :=low - (atr * atr_profit1)
+        shortprofit2 := low - (atr * atr_profit2) 
+        shortprofit3 := low - (atr * atr_profit3)
+        shortloss := high + atr*atr_profit3/1.5
+        stoploss := shortloss
+        // if (stoploss  - close > 5)
+        // stoploss := close + 5
+        // log.info("\n" +"close==>"+ str.tostring(close)+"\n"+"Takeprofit1==>"+str.tostring(shortprofit1) + "\n" + "Takeprofit2==>"+str.tostring(shortprofit2)+"\n"+"Takeprofit3==>"+str.tostring(shortprofit3)+"\n"+"stoploss==>" + str.tostring(stoploss-close))
+if strategy.position_size != 0
+    if (strategy.position_size == 100 and close > longprofit1) or (strategy.position_size == -100 and close < shortprofit1)
+        exitJsonMessage = Exit_Json_Message(syminfo.ticker,barbuy?"exit_buy":"exit_sell",barbuy?-25:25)
+        log.info(exitJsonMessage)
+        strategy.close(barbuy?"Long":"Short","Takeprofit1", qty =  25, alert_message = exitJsonMessage)
+        stoploss := barbuy?strategy.opentrades.entry_price(strategy.opentrades - 1) + 0.5:strategy.opentrades.entry_price(strategy.opentrades - 1) - 0.5
+    else 
+        if (strategy.position_size == 75 and close > longprofit2) or (strategy.position_size == -75 and close < shortprofit2)
+            exitJsonMessage = Exit_Json_Message(syminfo.ticker,barbuy?"exit_buy":"exit_sell",barbuy?-25:25)
+            log.info(exitJsonMessage)
+            strategy.close(barbuy?"Long":"Short","Takeprofit2",qty =  25, alert_message = exitJsonMessage)
+            stoploss := barbuy?longprofit2-1:shortprofit2+1
+        else 
+            if (strategy.position_size == 50 and close > longprofit3) or (strategy.position_size ==-50 and close < shortprofit3)
+                exitJsonMessage = Exit_Json_Message(syminfo.ticker,barbuy?"exit_buy":"exit_sell",barbuy?-50:50)
+                log.info(exitJsonMessage)
+                strategy.close(barbuy?"Long":"Short","Takeprofit3",qty = 50,alert_message =exitJsonMessage)
+
+    if barbuy and close < stoploss
+        
+        exitJsonMessage = Exit_Json_Message(syminfo.ticker,"exit_buy", 0 - strategy.position_size)
+        
+        log.info(exitJsonMessage)
+        strategy.close_all("buy stoploss")
+    else
+        if barsell and close > stoploss 
+            exitJsonMessage = Exit_Json_Message(syminfo.ticker,"exit_sell", 0 - strategy.position_size)
+            log.info(exitJsonMessage)
+            strategy.close_all("sell stoploss")
+
+    if strategy.position_size == 0
+        stoploss := na, barbuy := na, barsell := na
+        longprofit1 := na, longprofit2 := na, longprofit3 := na, shortprofit1 := na, shortprofit2 := na, shortprofit3 := na
