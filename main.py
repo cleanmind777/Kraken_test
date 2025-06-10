@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import GetWebSocketToken
+import GetWebSocketToken, user
 from dotenv import load_dotenv
 import os
 
@@ -14,6 +14,7 @@ WEBSOCKETTOKEN = GetWebSocketToken.get_token(PUBLIC_KEY, PRIVATE_KEY)
 
 app = FastAPI()
 
-@app.get("/balance")
-async def root():
-    return {"message": "Hello World"}
+# Get User Balance
+@app.get("/user/balance")
+async def get_balance():
+    print(user.get_balance(PRIVATE_KEY, PRIVATE_KEY))
