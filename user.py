@@ -9,14 +9,14 @@ import os
 # PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 
 # For Fast API
-def get_balance(public_key: str = "", private_key: str = "") -> str:
+def get_balance(public_key: str = "", private_key: str = ""):
     user = User(key=public_key, secret=private_key)
-    print(user.get_account_balance())
+    return user.get_account_balance()
 
 # For Local test
 # def get_balance():
 #     user = User(key=PUBLIC_KEY, secret=PRIVATE_KEY)
 #     print(user.get_account_balance())
 
-if __name__ == "__main__":
-    get_balance()
+# if __name__ == "__main__":
+#     get_balance()
