@@ -8,13 +8,20 @@ import hmac
 import base64
 import json
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PUBLIC_KEY = os.getenv("PUBLIC_KEY")
+PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
 def main():
    response = request(
       method="POST",
       path="/0/private/GetWebSocketsToken",
-      public_key="",
-      private_key="",
+      public_key= PUBLIC_KEY,
+      private_key= PRIVATE_KEY,
       environment="https://api.kraken.com",
    )
    print(response.read().decode())
