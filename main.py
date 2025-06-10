@@ -12,3 +12,8 @@ PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 #Get WebSocketToken
 WEBSOCKETTOKEN = GetWebSocketToken.get_token(PUBLIC_KEY, PRIVATE_KEY)
 
+app = FastAPI()
+
+@app.get("/balance")
+async def root():
+    return {"message": "Hello World"}
