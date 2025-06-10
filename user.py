@@ -26,7 +26,10 @@ def get_balance():
       private_key=PRIVATE_KEY,
       environment="https://api.kraken.com",
    )
-   print(response.read().decode())
+#    return(response.read().decode())
+   response = json.loads(response.read().decode('utf-8'))
+   
+   return(response)
 
 def request(method: str = "GET", path: str = "", query: dict | None = None, body: dict | None = None, public_key: str = "", private_key: str = "", environment: str = "") -> http.client.HTTPResponse:
    url = environment + path
