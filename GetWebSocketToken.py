@@ -8,23 +8,19 @@ import hmac
 import base64
 import json
 import time
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-PUBLIC_KEY = os.getenv("PUBLIC_KEY")
-PRIVATE_KEY = os.getenv("PRIVATE_KEY")
-
-def get_token():
+def get_token(public_key: str = "", private_key: str = "") -> str:
    response = request(
       method="POST",
       path="/0/private/GetWebSocketsToken",
-      public_key= PUBLIC_KEY,
-      private_key= PRIVATE_KEY,
+      public_key= public_key,
+      private_key= private_key,
       environment="https://api.kraken.com",
    )
-   print(response.read().decode())
+   response_data = json.loads(response.read().decode())  # Convert JSON string to dict
+   token = response_data["result"]["token"]
+   return token
+   
 
 def request(method: str = "GET", path: str = "", query: dict | None = None, body: dict | None = None, public_key: str = "", private_key: str = "", environment: str = "") -> http.client.HTTPResponse:
    url = environment + path
@@ -76,7 +72,3 @@ def sign(private_key: str, message: bytes) -> str:
          digestmod=hashlib.sha512,
       ).digest()
    ).decode()
-
-
-if __name__ == "__main__":
-   get_token()
