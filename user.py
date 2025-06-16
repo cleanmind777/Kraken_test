@@ -28,7 +28,6 @@ def get_balance():
    )
 #    return(response.read().decode())
    response = json.loads(response.read().decode('utf-8'))
-   
    return(response)
 
 def request(method: str = "GET", path: str = "", query: dict | None = None, body: dict | None = None, public_key: str = "", private_key: str = "", environment: str = "") -> http.client.HTTPResponse:

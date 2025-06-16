@@ -38,7 +38,7 @@ async def get_balance():
     balance = 0.0
     if error is not None:
         try:
-            balance = result['balance']
+            balance = result['USDT']
         except:
             balance = 0.0
         return balance
@@ -54,15 +54,19 @@ async def create_order(order: Order):
         error = response['error']
         result = response['result']
         try:
-            balance = result['balance']
+            balance = result['USDT']
+            balance = float(balance)
+            print(balance)
         except:
             balance = 0.0
         if balance == 0.0:
             return "Not enough"
         else:
-            qty = balance / 4
+            # qty = balance / 4
+            qty = 0.1
             trade_value = 100
             response = order_module.create_order(order.pair, order.type, qty)
+            print(response)
     elif order.type == "exit_buy":
         if qty == 0:
             return "No postion"

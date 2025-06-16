@@ -31,6 +31,7 @@ def create_order(pair: str = '', type: str = '', volume: str = ''):
       private_key=PRIVATE_KEY,
       environment="https://api.kraken.com",
    )
+   # print(response.read().decode())
    return(response.read().decode())
 
 def request(method: str = "GET", path: str = "", query: dict | None = None, body: dict | None = None, public_key: str = "", private_key: str = "", environment: str = "") -> http.client.HTTPResponse:
